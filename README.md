@@ -2,7 +2,7 @@
 
 StockWise is a local inventory workspace for tracking products, stock levels, and stock movements. It is a portfolio project aimed at developers and technical reviewers who want to see a small, typed monorepo with a React interface and an Express API backed by MySQL.
 
-The application is not deployed. It runs on your machine.
+It runs on your machine. The same process can also be hosted on Railway as one web service in front of a private MySQL database. Nothing is deployed yet.
 
 ## Key features
 
@@ -35,7 +35,7 @@ packages/db         Prisma schema, migrations, and createPrismaClient().
 packages/shared     Small shared constants and the health response type.
 ```
 
-The browser does not talk to MySQL. In development, Vite (port `5173`) proxies `/api` and `/health` to the API (port `3001`). The API loads `DATABASE_URL` from `packages/db/.env` and uses the Prisma client exported by `@stockwise/db`. Prisma connects with the MariaDB driver adapter.
+The browser does not talk to MySQL. In development, Vite (port `5173`) proxies `/api` and `/health` to the API (port `3001`). In production, Express serves the built UI from `apps/web/dist` on the same host and port as the API, so those relative paths stay the same. The API uses `DATABASE_URL` from the process environment when it is already set, and otherwise reads it from `packages/db/.env`. Prisma connects with the MariaDB driver adapter.
 
 `packages/shared` currently exports the service name and the health payload type. Product and movement types live next to the API and UI that use them.
 
@@ -75,7 +75,7 @@ DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/stockwise"
 
 If the password contains characters such as `@`, `:`, `/`, `?`, `#`, `%`, or a space, percent-encode those characters in the URL. A literal `!` is written as `%21`. Do not encode it twice.
 
-The API reads `DATABASE_URL` from `packages/db/.env`. It listens on `PORT` from the process environment, or on `3001` when `PORT` is unset. The `PORT` line in `.env.example` documents that default. It is not loaded from `packages/db/.env`.
+The API reads `DATABASE_URL` from the process environment when that variable is already set, and otherwise from `packages/db/.env`. It listens on `0.0.0.0` and on `PORT`, or on port `3001` when `PORT` is unset. `http://localhost:3001` still reaches a local process. The `PORT` line in `.env.example` documents the local default. It is not loaded from `packages/db/.env`.
 
 ### Migrations and client
 
@@ -107,6 +107,52 @@ To run the API once, without the file watcher:
 ```powershell
 pnpm start:api
 ```
+
+## Deployment
+
+StockWise is set up for one Railway web service plus a private Railway MySQL database. This repository does not create that project, and the app is not deployed.
+
+Production uses two root scripts:
+
+| Script | What it does |
+|---|---|
+| `pnpm build` | Generates the Prisma client, then builds the React app into `apps/web/dist`. |
+| `pnpm start` | Applies the committed migrations with `prisma migrate deploy`, then starts Express. |
+
+`tsx`, `prisma`, and `dotenv` are production dependencies so the start command can run when devDependencies are omitted. The UI build still needs the web package's devDependencies (Vite and TypeScript), so install them during the build.
+
+### Railway
+
+1. Create a Railway project and add MySQL. Leave the database on the private network. Do not enable public database access.
+2. Add one web service from this repository. Set its root directory to the repository root, not `apps/api`.
+3. On the web service, set `DATABASE_URL` to the MySQL service's private connection URL. In Railway that reference is usually `${{MySQL.MYSQL_URL}}`. Use the variable name Railway shows for the plugin. Do not paste `packages/db/.env` or any local password. Do not set `PORT`. Railway injects it, and the server binds to `0.0.0.0`.
+4. Build command: `pnpm build`
+5. Start command: `pnpm start`
+6. Health check path: `/health`
+
+Use Node.js 22.14 or newer. Leave `NODE_ENV` unset on the service. Setting it to `production` during install can skip Vite and TypeScript, which the web build needs.
+
+`pnpm build` does not connect to MySQL. `pnpm start` does: `prisma migrate deploy` runs at process start, when Railway's private hostname is reachable. The committed migration is `20261027133059_add_inventory`. Deploy does not create new migrations and does not reset existing tables.
+
+Open the service URL after deploy. `/` is the built UI. `/health` returns `{ "service": "stockwise", "status": "ok" }`.
+
+The public API has no authentication. Use a new Railway database, keep MySQL private, and treat the inventory data as shared and disposable.
+
+### Production start on your machine
+
+Build first, then start the API without running a migration:
+
+```powershell
+pnpm build
+pnpm start:api
+```
+
+- UI and API: http://localhost:3001
+- Health: http://localhost:3001/health
+
+`pnpm dev:web` and `pnpm dev:api` stay the local development commands. The Vite proxy is unchanged.
+
+`pnpm start` also runs `prisma migrate deploy` before the server. Run that only against the database you intend to migrate.
 
 ## API endpoints
 
@@ -178,27 +224,31 @@ These commands exist and can be run from the root:
 
 ```powershell
 pnpm typecheck
+pnpm build
 pnpm build:web
 pnpm --filter @stockwise/web lint
 pnpm db:validate
 ```
 
 - `pnpm typecheck` runs TypeScript in `apps/web`, `apps/api`, `packages/db`, and `packages/shared`.
+- `pnpm build` generates the Prisma client and then runs `pnpm build:web`.
 - `pnpm build:web` typechecks the UI and produces a Vite production build.
 - `pnpm --filter @stockwise/web lint` runs oxlint on the UI.
 - `pnpm db:validate` checks `schema.prisma`. It does not prove that MySQL accepted a connection.
 
 During development, `pnpm typecheck` and `pnpm build:web` completed successfully. Product create, read, update, and delete, stock in and stock out, insufficient stock, and the dashboard were exercised manually against a local MySQL database. The UI was opened against the Vite dev server and the same API.
 
+`pnpm typecheck` and `pnpm build` were run again after the Railway hosting changes. A local production process was then started with `pnpm start:api` on port `3099` (port `3001` was already in use). It bound to `0.0.0.0`, served the built UI at `/`, returned JSON from `/health`, `/api/products`, and `/api/dashboard`, and returned a JSON `404` for an unknown `/api` path. `pnpm start` was not run, so `prisma migrate deploy` was not applied to the local database.
+
 ## Limitations and possible next steps
 
-- No authentication, roles, or multi-user accounts.
-- No deployment configuration and no hosted environment.
-- No automated test suite and no CI workflow.
+- No authentication, roles, or multi-user accounts. A public Railway URL exposes the same write API.
+- Prepared for Railway, and not hosted anywhere yet. There is no CI workflow.
+- No automated test suite.
 - Movement history cannot be edited or reversed. The only correction is another movement.
 - Products with history cannot be deleted from the API.
 - The dashboard endpoint does not include movement rows. The UI loads those separately.
 - The API reads only `DATABASE_URL` from `packages/db/.env`. Other keys in that file are ignored.
 - One local MySQL database is assumed. There is no file import, barcode flow, or warehouse transfer model.
 
-Reasonable follow-ups are an automated API test suite, authenticated users, editable movement notes, and a deployment story. Those are not implemented.
+Reasonable follow-ups are an automated API test suite, authenticated users, and editable movement notes. Those are not implemented.

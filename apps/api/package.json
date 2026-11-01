@@ -12,12 +12,12 @@
     "@stockwise/db": "workspace:*",
     "@stockwise/shared": "workspace:*",
     "dotenv": "^18.0.9",
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
-    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   }
 }

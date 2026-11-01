@@ -11,7 +11,9 @@
     "dev:web": "pnpm --filter @stockwise/web dev",
     "dev:api": "pnpm --filter @stockwise/api dev",
     "build:web": "pnpm --filter @stockwise/web build",
+    "build": "pnpm db:generate && pnpm build:web",
     "start:api": "pnpm --filter @stockwise/api start",
+    "start": "pnpm --filter @stockwise/db exec prisma migrate deploy && pnpm start:api",
     "typecheck": "pnpm -r --if-present typecheck",
     "db:generate": "pnpm --filter @stockwise/db generate",
     "db:validate": "pnpm --filter @stockwise/db validate"
