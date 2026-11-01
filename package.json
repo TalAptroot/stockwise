@@ -16,9 +16,11 @@
     "start": "pnpm --filter @stockwise/db exec prisma migrate deploy && pnpm start:api",
     "typecheck": "pnpm -r --if-present typecheck",
     "db:generate": "pnpm --filter @stockwise/db generate",
-    "db:validate": "pnpm --filter @stockwise/db validate"
+    "db:validate": "pnpm --filter @stockwise/db validate",
+    "demo": "node scripts/demo.mjs",
+    "demo:reset": "node scripts/demo-reset.mjs"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "prisma", "@prisma/engines", "@prisma/client"]
+    "onlyBuiltDependencies": ["esbuild", "prisma", "@prisma/engines", "@prisma/client", "better-sqlite3"]
   }
 }

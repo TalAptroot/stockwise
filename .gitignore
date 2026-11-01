@@ -18,3 +18,5 @@ Thumbs.db
 
 .prisma/
 packages/db/generated/
+packages/db/data/*.db
+packages/db/data/*.db-*
