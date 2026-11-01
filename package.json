@@ -1,0 +1,22 @@
+{
+  "name": "stockwise",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.34.8",
+  "engines": {
+    "node": ">=22.14.0",
+    "pnpm": ">=10.34.0"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @stockwise/web dev",
+    "dev:api": "pnpm --filter @stockwise/api dev",
+    "build:web": "pnpm --filter @stockwise/web build",
+    "start:api": "pnpm --filter @stockwise/api start",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:generate": "pnpm --filter @stockwise/db generate",
+    "db:validate": "pnpm --filter @stockwise/db validate"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "prisma", "@prisma/engines", "@prisma/client"]
+  }
+}

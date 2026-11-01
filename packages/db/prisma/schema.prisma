@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum StockMovementType {
+  IN
+  OUT
+}
+
+model Product {
+  id          Int             @id @default(autoincrement())
+  name        String
+  sku         String          @unique
+  category    String
+  price       Decimal         @db.Decimal(10, 2)
+  quantity    Int             @default(0)
+  minQuantity Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  movements   StockMovement[]
+
+  @@index([name])
+  @@index([category])
+}
+
+model StockMovement {
+  id        Int               @id @default(autoincrement())
+  productId Int
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  type      StockMovementType
+  quantity  Int
+  createdAt DateTime          @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}

@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+@keyframes stockwise-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stockwise-drawer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.stockwise-rise {
+  animation: stockwise-rise 160ms ease-out;
+}
+
+.stockwise-drawer {
+  animation: stockwise-drawer 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stockwise-rise,
+  .stockwise-drawer {
+    animation: none;
+  }
+}

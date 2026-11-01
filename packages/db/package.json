@@ -1,0 +1,25 @@
+{
+  "name": "@stockwise/db",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "validate": "prisma validate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "mariadb": "3.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "dotenv": "^18.0.9",
+    "prisma": "7.10.1",
+    "typescript": "~6.0.3"
+  }
+}
